@@ -1,44 +1,73 @@
+using SaunaMonitor.Models;
+using SaunaMonitor.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+
+//test comment
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<MeasurementDb>(opt => opt.UseSqlite("Data Source=sauna.db"));
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.MapGet("/measurements", async (MeasurementDb db) =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    var measurements = await db.Measurements
+        .OrderByDescending(m => m.ReadingDate)
+        .ToListAsync();
 
-app.UseHttpsRedirection();
+    var mostRecent = measurements.FirstOrDefault();
 
-var summaries = new[]
+    return Results.Ok(measurements);
+});
+
+app.MapPost("/measurements", async (Measurement measurement, MeasurementDb db) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    
+    Console.WriteLine("Incoming Data:");
+    Console.WriteLine($"TemperatureC: {measurement?.TemperatureC}");
+    Console.WriteLine($"Humidity: {measurement?.Humidity}");
+    Console.WriteLine($"ReadingDate: {measurement?.ReadingDate}");
 
-app.MapGet("/weatherforecast", () =>
+    if (measurement == null)
+    {
+        return Results.BadRequest("Invalid data.");
+    }
+    
+    db.Measurements.Add(measurement);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/measurements/{measurement.Id}", measurement);
+});
+
+app.MapPost("/webhook", async (Measurement measurement, MeasurementDb db) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    
+    // Get the current UTC time
+    DateTime utcNow = DateTime.UtcNow;
+
+    // Convert the UTC time to the local time zone, considering daylight saving time
+    TimeZoneInfo localTimeZone = TimeZoneInfo.Local; // Use the local time zone of the server
+    DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, localTimeZone);
+
+    // Set the ReadingDate to the current local time
+    measurement.ReadingDate = localTime;
+    
+    // Convert the measurement object back to JSON for debugging
+    string json = System.Text.Json.JsonSerializer.Serialize(measurement);
+
+    // Print the received JSON
+    Console.WriteLine("Received JSON: " + json);
+    
+    // Optionally, you can also log the JSON using a logging library:
+    // _logger.LogInformation("Received JSON: " + json);
+
+    // Uncomment this to save the measurement to the database
+    // db.Measurements.Add(measurement);
+    // await db.SaveChangesAsync();
+
+    return Results.Created($"/measurements/{measurement.Id}", measurement);
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
