@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "xcBEDF9Y9PHNToP8iRQLXTgDcHbCbHx2GIpITfipNcM=",
+  "Source": "SaunaMonitor",
+  "BasePath": "_content/SaunaMonitor",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
