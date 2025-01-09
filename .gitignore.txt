@@ -1,0 +1,48 @@
+# macOS system files
+.DS_Store
+
+# JetBrains Rider / IntelliJ IDEA / PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Xcode
+.DS_Store
+*.xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+*.xcworkspace/
+*.xcodeproj/xcuserdata/
+DerivedData/
+build/
+
+
+# Ignore binaries and compiled files (general)
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.a
+*.out
+
+# Ignore Rider-specific IDE files
+.idea/
+*.sln.iml
+*.sln.DotSettings.user
+*.suo
+*.user
+*.cache/
+*.vs/
+
+# Ignore temporary development or backup files
+*.bak
+*.swp
+*.orig
+*.tmp
+*.vscode/
