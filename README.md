@@ -1,2 +1,2 @@
 # Sauna-Monitor
-IOS app to remotely monitor the temperature of an outdoor sauna building over a local network.
+Development of an IOS app to remotely monitor the temperature and log activity of an outdoor sauna over a local network.
