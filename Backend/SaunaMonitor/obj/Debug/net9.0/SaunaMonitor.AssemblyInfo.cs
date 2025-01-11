@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SaunaMonitor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e52f95f958af2f458d784d23c6cfc2dd0b1e08bb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d26c3a91ec985af3cb0674eacf2d17e8cf4d6800")]
 [assembly: System.Reflection.AssemblyProductAttribute("SaunaMonitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SaunaMonitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
