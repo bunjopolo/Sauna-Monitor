@@ -1,6 +1,9 @@
 # macOS system files
 .DS_Store
 
+# SQLite atabase files
+*.db
+
 # JetBrains Rider / IntelliJ IDEA / PyCharm
 .idea/
 *.iml
