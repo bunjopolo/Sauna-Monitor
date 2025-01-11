@@ -10,6 +10,11 @@
 *.ipr
 *.iws
 
+
+# Database files
+*.db-shm
+*.db-wal
+
 # Logs and temporary files
 *.log
 *.tmp
