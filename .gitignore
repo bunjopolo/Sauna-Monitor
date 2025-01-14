@@ -54,4 +54,5 @@ build/
 *.orig
 *.tmp
 *.vscode/
+.env
 
