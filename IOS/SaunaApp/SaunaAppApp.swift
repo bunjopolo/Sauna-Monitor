@@ -17,8 +17,6 @@ struct SaunaAppApp: App {
         }
     }
     
-
-
     
 }
 
