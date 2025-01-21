@@ -10,10 +10,9 @@ import SwiftyJSON
 import Foundation
 
 
-
-
-
 struct ContentView: View {
+    @StateObject var webSocketManager = WebSocketManager()
+    
     var body: some View {
         TabView {
             // First Tab: Temperature Gauge View
@@ -26,19 +25,20 @@ struct ContentView: View {
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-            
-
+        }
+        .onAppear(){
+            webSocketManager.connect()
         }
     }
 }
 
 
 struct SettingsView: View {
-    @StateObject var testInfo = Testinfo()
+    @StateObject var sensorData = SensorData()
     
     var body: some View {
         NavigationView {
-            List(testInfo.Infos) { info in
+            List(sensorData.Infos) { info in
                 VStack(alignment: .leading) {
                     Text("Temperature: \(info.temperature)°C")
                         .font(.headline)
@@ -48,18 +48,16 @@ struct SettingsView: View {
             }
             .navigationTitle("Measurements")
             .onAppear {
-                print("Loaded Infos: \(testInfo.Infos)")
+                print("Loaded Infos: \(sensorData.Infos)")
             }
         }
     }
 }
 
 
-
-
 struct TemperatureGaugeView: View {
     
-    @StateObject var sensorData = Testinfo()
+    @StateObject var sensorData = SensorData()
     
     @State private var temperature: Double = 100.0 // Initial temperature value
     @State private var humidity: Double = 70.0 // Initial humidity
@@ -78,9 +76,7 @@ struct TemperatureGaugeView: View {
     
     
     var body: some View {
-        
-
-        
+    
         VStack {
             VStack {
                 Text(statusEmoji)
@@ -183,12 +179,12 @@ struct TemperatureGaugeView: View {
 }
 
 
-
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
     }
 }
+
 
 //data structure
 struct Info: Identifiable{
@@ -197,7 +193,8 @@ struct Info: Identifiable{
     var humidity: String
 }
 
-class Testinfo: ObservableObject {
+
+class SensorData: ObservableObject {
     @Published var Infos = [Info]()
     
     init() {
@@ -238,3 +235,79 @@ class Testinfo: ObservableObject {
         }
     }
 }
+
+
+
+class WebSocketManager: ObservableObject {
+    private var webSocketTask: URLSessionWebSocketTask?
+    
+    @Published var recievedMessage: String = ""
+    
+    private var webSocketURL: URL?
+    
+    // create URL object
+    init(){
+        let env = ProcessInfo.processInfo.environment
+        if let webSocketURLString = env["WEBSOCKET_ENDPOINT"], let url = URL(string: webSocketURLString){
+            self.webSocketURL = url
+            connect()
+        } else {
+            print("Error: Websocket URL environment variable not found")
+        }
+    }
+    
+    // connect to the websocket server
+    func connect() {
+        guard let url = webSocketURL else {
+            print("Invalid websocket URL")
+            return
+        }
+        
+        let urlSession = URLSession(configuration: .default)
+        webSocketTask = urlSession.webSocketTask(with: url)
+        webSocketTask?.resume()
+        
+        receiveMessage()
+    }
+    
+    // Listen for messages from the WebSocket server
+    func receiveMessage() {
+        webSocketTask?.receive { [weak self] result in
+            switch result {
+            case .success(let message):
+                // Handle the incoming message
+                if case .string(let text) = message {
+                    DispatchQueue.main.async {
+                        self?.recievedMessage = text
+                    }
+                }
+                // Keep listening for new messages
+                self?.receiveMessage()
+                
+            case .failure(let error):
+                print("Failed to receive message: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    
+    // Send a message to the WebSocket server
+    func sendMessage(_ message: String) {
+        guard let webSocketTask = webSocketTask else { return }
+        let message = URLSessionWebSocketTask.Message.string(message)
+        webSocketTask.send(message) { error in
+            if let error = error {
+                print("Error sending message: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // Disconnect from the WebSocket server
+    func disconnect() {
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+    }
+    
+    
+    
+}
+

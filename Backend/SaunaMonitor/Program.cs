@@ -1,14 +1,18 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
+using SaunaMonitor;
 using SaunaMonitor.Data;
 using SaunaMonitor.Models;
+using SaunaMonitor.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<MeasurementDb>(opt => opt.UseSqlite("Data Source=sauna.db"));
 
+var webSocketHandler = new WebSocketHandler();
+builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 var app = builder.Build();
 
 // GET /measurements
@@ -79,8 +83,29 @@ app.MapPost("/webhook", async (HttpRequest request, MeasurementDb db) =>
     //Save the measurement to the database
     db.Measurements.Add(measurement);
     await db.SaveChangesAsync();
-
+    
+    var message = JsonSerializer.Serialize(measurement);
+    await webSocketHandler.BroadcastMessage(message);
+    
     return Results.Created($"/measurements/{measurement.Id}", measurement);
 });
+
+// GET /ws
+app.MapGet("/ws", async (HttpContext context) =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        await webSocketHandler.HandleWebSocketConnection(context, webSocket);
+    }
+    else
+    {
+        context.Response.StatusCode = 400;
+    }
+    
+
+});
+
+
 
 app.Run();
